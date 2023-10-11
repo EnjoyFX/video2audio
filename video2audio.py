@@ -1,10 +1,11 @@
+"""Module for converting video to audio"""
 import logging
-from tkinter import Tk
-from tkinter import filedialog as fd
-from moviepy import editor as me
 import os
 import sys
+from tkinter import Tk
+from tkinter import filedialog as fd
 from logging import StreamHandler
+from moviepy import editor as me
 
 
 __version__ = '1.0.2'
@@ -16,15 +17,22 @@ logger.addHandler(handler)
 
 
 class Converter:
+    """Class for converting video to audio with different bitrate"""
     def __init__(self):
         self.root = Tk()
 
     def video_to_mp3(self, bitrate='320k'):
+        """
+        Method for converting video to audio
+        :param bitrate: Audio bitrate, given as a string like '50k', '320k'...
+        :return: None
+        """
         self.root.withdraw()
 
         files = fd.askopenfilenames(filetypes=[('mp4 files', '*.mp4')])
         if not files:
-            logger.info(f'{app_name}: No files selected')
+            msg = f'{app_name}: No files selected'
+            logger.info(msg)
             sys.exit()
 
         path = os.path.dirname(files[-1])
@@ -33,8 +41,9 @@ class Converter:
             name = os.path.basename(file)
             try:
                 video = me.VideoFileClip(file)
-            except Exception as e:
-                logger.warning(f'Issue with opening video "{name}": {e}')
+            except KeyError as e:
+                msg = f'Issue with opening video "{name}": {e}'
+                logger.warning(msg)
                 sys.exit(1)
 
             audio = video.audio
@@ -42,24 +51,28 @@ class Converter:
                 codec = audio.reader.acodec
                 rate = audio.fps
                 channels = audio.nchannels
-                logger.info(f'Audio details: codec {codec}, {rate} Hz, '
-                            f'{channels} channel(s)')
+                msg = f'Details: {codec=}, {rate=} Hz, {channels=}'
+                logger.info(msg)
             else:
-                logger.warning(f'Audio not found in "{name}"')
+                msg = f'Audio not found in "{name}"'
+                logger.warning(msg)
 
-            audioname = os.path.join(path, name.replace('.mp4', '.mp3'))
+            audio_name = os.path.join(path, name.replace('.mp4', '.mp3'))
 
             try:
-                audio.write_audiofile(audioname, bitrate=bitrate)
+                audio.write_audiofile(audio_name, bitrate=bitrate)
                 ok += 1
-            except Exception as e:
+            except AttributeError as e:
                 bad += 1
-                logger.warning(f'Issue with coonverting file "{name}": {e}')
+                msg = f'Issue with converting file "{name}": {e}'
+                logger.warning(msg)
             finally:
                 video.close()
 
-        msg = f'Converted: {ok}, not converted: {bad}. ' \
-              f'Total files processed: {ok+bad}'
+        total = ok + bad
+        msg = f'Converted: {ok}({ok/total:.1%}), ' \
+              f'not converted: {bad}({bad/total:.1%}). ' \
+              f'Total files processed: {total}'
         logger.info(msg)
 
 
