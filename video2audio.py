@@ -2,13 +2,12 @@ import logging
 from tkinter import Tk
 from tkinter import filedialog as fd
 from moviepy import editor as me
-from plyer import notification as ntf
 import os
 import sys
 from logging import StreamHandler
 
 
-__version__ = '1.0.1'
+__version__ = '1.0.2'
 app_name = f'Py video->audio extractor (mp4->mp3) {__version__}'
 logger = logging.getLogger(__file__)
 logger.setLevel(logging.DEBUG)
@@ -39,6 +38,15 @@ class Converter:
                 sys.exit(1)
 
             audio = video.audio
+            if audio:
+                codec = audio.reader.acodec
+                rate = audio.fps
+                channels = audio.nchannels
+                logger.info(f'Audio details: codec {codec}, {rate} Hz, '
+                            f'{channels} channel(s)')
+            else:
+                logger.warning(f'Audio not found in "{name}"')
+
             audioname = os.path.join(path, name.replace('.mp4', '.mp3'))
 
             try:
@@ -53,7 +61,6 @@ class Converter:
         msg = f'Converted: {ok}, not converted: {bad}. ' \
               f'Total files processed: {ok+bad}'
         logger.info(msg)
-        ntf.notify(title=app_name, message=msg, timeout=10)
 
 
 if __name__ == "__main__":
